@@ -99,6 +99,15 @@ class SandboxWorkspace {
     if (this.phase === "redline" && !this.isTestPath(target)) {
       throw new Error("The redline phase may only write test files")
     }
+    if (this.phase === "redline") {
+      try {
+        await this.sandbox.files.stat(target)
+        throw new Error("The redline phase may only create a new test file; existing tests are immutable")
+      } catch (error) {
+        if (error instanceof Error && error.message.includes("existing tests are immutable")) throw error
+        // A missing file is the intended case for a new redline test.
+      }
+    }
     await this.sandbox.files.write(target, content)
     await this.recorder.event("sandbox.write", { path: target, bytes: content.length, phase: this.phase })
     return { path: target, bytes: content.length }
@@ -212,7 +221,7 @@ class BrowserWorkspace {
 }
 
 class RepairAgent {
-  constructor(private readonly apiKey: string, private readonly baseUrl: string, private readonly model: string, private readonly recorder: RunRecorder) {}
+  constructor(private readonly apiKey: string, private readonly baseUrl: string, private readonly model: string, private readonly recorder: RunRecorder, private readonly config: IssuePatchConfig) {}
 
   async run(issue: IssueEvent, triage: TriageResult, workspace: SandboxWorkspace, browser: BrowserWorkspace, phase: "redline" | "patch"): Promise<void> {
     const root = REPO_ROOT
@@ -232,6 +241,7 @@ class RepairAgent {
       "You are a careful IssuePatch maintenance agent.",
       `The isolated repository is ${root}.`,
       `This is the ${phase} phase.`,
+      `Configured application command: ${this.config.projectStartCommand ?? "not configured"} ${JSON.stringify(this.config.projectStartArgs)}. Configured test command: ${this.config.projectTestCommand ?? "not configured"} ${JSON.stringify(this.config.projectTestArgs)}. Use these commands exactly when running the app or tests.`,
       phase === "redline"
         ? "Only add a test that expresses the Issue acceptance criteria. Do not modify application code. Focus on the target files named by the Issue, inspect only the target app and relevant tests, and finish immediately after the test is written."
         : "Apply the smallest correct implementation change. Use the existing redline test and finish after the code is repaired. Focus only on the target app and its relevant tests; do not inspect unrelated IssuePatch orchestration files.",
@@ -321,11 +331,12 @@ export class SolariRepairExecutor implements MaintenanceExecutor {
       await server.stopServer()
 
       server.setPhase("redline")
-      await new RepairAgent(this.config.llmApiKey, this.config.llmBaseUrl, this.config.llmModel, recorder).run(event, triage, server, browserWorkspace, "redline")
+      await new RepairAgent(this.config.llmApiKey, this.config.llmBaseUrl, this.config.llmModel, recorder, this.config).run(event, triage, server, browserWorkspace, "redline")
       const redline = await server.runConfiguredTest()
       await recorder.json("redline-tests.json", redline)
+      if (redline.exitCode === 0) throw new Error("The redline test did not fail on the baseline")
       server.setPhase("patch")
-      await new RepairAgent(this.config.llmApiKey, this.config.llmBaseUrl, this.config.llmModel, recorder).run(event, triage, server, browserWorkspace, "patch")
+      await new RepairAgent(this.config.llmApiKey, this.config.llmBaseUrl, this.config.llmModel, recorder, this.config).run(event, triage, server, browserWorkspace, "patch")
       const tests = await server.runConfiguredTest()
       await recorder.json("tests-after-patch.json", tests)
       const verifiedUrl = await server.startServer(plan.port)
