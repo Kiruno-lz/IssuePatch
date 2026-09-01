@@ -227,7 +227,7 @@ class RepairAgent {
       const response = await fetch(`${this.baseUrl}/v1/messages`, {
         method: "POST",
         headers: { "x-api-key": this.apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-        body: JSON.stringify({ model: this.model, system, messages, max_tokens: 4000, temperature: 0, tools: tools.map((tool) => ({ name: tool.name, description: tool.description, input_schema: { type: "object", required: tool.required ?? [], properties: tool.properties } })) }),
+        body: JSON.stringify({ model: this.model, system, messages, max_tokens: 4000, temperature: 0, thinking: { type: "disabled" }, tools: tools.map((tool) => ({ name: tool.name, description: tool.description, input_schema: { type: "object", required: tool.required ?? [], properties: tool.properties } })) }),
       })
       if (!response.ok) throw new Error(`Repair agent request failed (${response.status})`)
       const payload = await response.json() as { content?: Array<{ type: string; id?: string; name?: string; input?: Record<string, unknown>; text?: string }> }

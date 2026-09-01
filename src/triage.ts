@@ -115,6 +115,7 @@ export class AnthropicTriageModel implements TriageModel {
         model: this.model,
         max_tokens: 1200,
         temperature: 0,
+        thinking: { type: "disabled" },
         messages: [{ role: "user", content: prompt }],
       }),
     })
