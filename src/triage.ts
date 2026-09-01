@@ -19,6 +19,8 @@ export function triagePrompt(issue: Issue): string {
     "Classify this GitHub Issue for an autonomous repository maintenance service.",
     "Return JSON only with route, confidence, rationale, evidence, acceptanceCriteria, and needsHumanReview.",
     "For code_bug or feature_request, also return verificationPlan with port, baseline, and after browser steps.",
+    "Each verification step must be an object, never a sentence: goto={action:\"goto\",path?:\"/\"}, click={action:\"click\",selector:\"#next\"}, type={action:\"type\",selector:\"#query\",value:\"text\"}, assert={action:\"assert_text\",selector:\"[data-testid=items]\",expected:\"Item 6\"}.",
+    "Example verificationPlan: {\"port\":3000,\"baseline\":[{\"action\":\"goto\"},{\"action\":\"click\",\"selector\":\"#next\"},{\"action\":\"assert_text\",\"selector\":\"[data-testid=page-status]\",\"expected\":\"Page 2 of 2\"},{\"action\":\"assert_text\",\"selector\":\"[data-testid=item]\",\"expected\":\"Item 1\"}],\"after\":[{\"action\":\"goto\"},{\"action\":\"click\",\"selector\":\"#next\"},{\"action\":\"assert_text\",\"selector\":\"[data-testid=page-status]\",\"expected\":\"Page 2 of 2\"},{\"action\":\"assert_text\",\"selector\":\"[data-testid=item]\",\"expected\":\"Item 6\"},{\"action\":\"click\",\"selector\":\"#previous\"},{\"action\":\"assert_text\",\"selector\":\"[data-testid=item]\",\"expected\":\"Item 1\"}]}.",
     `Allowed route values: ${routes.join(", ")}.`,
     "Use human_review for security-sensitive, ambiguous, or high-impact decisions.",
     `Repository: ${issue.repository}`,
