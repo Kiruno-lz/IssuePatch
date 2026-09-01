@@ -74,6 +74,7 @@ test("monitor accepts a fresh mention in the Issue body", async () => {
     repository: "owner/repo", mentionHandle: "IssuePatch", includeExisting: false, now: () => "2026-09-01T00:02:00.000Z",
   })
   const events = await monitor.pollOnce()
+  assert.equal(events.length, 1)
   assert.equal(events[0].source, "mention")
   assert.match(events[0].triggerId, /mention:body$/)
   assert.equal(accepted.length, 1)

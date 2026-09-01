@@ -60,12 +60,12 @@ export class IssueMonitor {
     for (const issue of issues) {
       if (issue.isPullRequest) continue
       const isNew = cursor ? issue.createdAt > cursor : this.options.includeExisting
-      if (isNew) {
+      const bodyIsNew = cursor ? issue.updatedAt > cursor : this.options.includeExisting || issue.createdAt > state.initializedAt
+      const bodyMentioned = bodyIsNew && containsMention(issue.body, this.options.mentionHandle)
+      if (isNew && !bodyMentioned) {
         await this.emit({ source: "poll", issue, observedAt }, state, events)
       }
-
-      const bodyIsNew = cursor ? issue.updatedAt > cursor : this.options.includeExisting || issue.createdAt > state.initializedAt
-      if (bodyIsNew && containsMention(issue.body, this.options.mentionHandle)) {
+      if (bodyMentioned) {
         await this.emit({ source: "mention", issue, observedAt }, state, events)
       }
 
