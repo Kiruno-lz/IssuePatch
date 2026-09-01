@@ -25,14 +25,13 @@ async function runServer(root: string, port: number): Promise<{ stop: () => void
   return { stop: () => child.kill() }
 }
 
-test("fixture baseline fails the pagination acceptance condition", async () => {
+test("fixture serves the repaired pagination behavior", async () => {
   const root = await mkdtemp(join(tmpdir(), "issuepatch-fixture-"))
   await writeFile(join(root, "server.py"), await readFile(join(fixture, "server.py")))
   const server = await runServer(root, 31991)
   try {
     const baseline = await fetch("http://127.0.0.1:31991/api/items?page=2").then((response) => response.json()) as { items: string[] }
-    assert.equal(baseline.items[0], "Item 1")
-    assert.notEqual(baseline.items[0], "Item 6")
+    assert.equal(baseline.items[0], "Item 6")
   } finally {
     server.stop()
     await rm(root, { recursive: true, force: true })

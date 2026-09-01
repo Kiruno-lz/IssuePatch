@@ -302,6 +302,10 @@ class RepairAgent {
           await this.recorder.event("agent.phase.complete", { phase, reason: "configured test command passed after a patch write" })
           return
         }
+        if (phase === "redline" && call.name === "run_command" && (result as { exitCode?: number }).exitCode !== 0) {
+          await this.recorder.event("agent.phase.complete", { phase, reason: "configured test command failed on the baseline" })
+          return
+        }
       }
       messages.push({ role: "user", content: toolResults })
       if (finished) break
