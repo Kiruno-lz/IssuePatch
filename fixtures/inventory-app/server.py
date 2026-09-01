@@ -22,8 +22,7 @@ class Handler(BaseHTTPRequestHandler):
 
         if parsed.path == "/api/items":
             page = int(parse_qs(parsed.query).get("page", ["1"])[0])
-            # Intentional bug for IssuePatch: page is ignored.
-            start = 0
+            start = (page - 1) * PAGE_SIZE
             payload = {"page": page, "pages": 2, "items": ITEMS[start:start + PAGE_SIZE]}
             body = json.dumps(payload).encode()
             self.send_response(200)
