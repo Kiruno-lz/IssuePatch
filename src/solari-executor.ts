@@ -229,7 +229,7 @@ class RepairAgent {
         headers: { "x-api-key": this.apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
         body: JSON.stringify({ model: this.model, system, messages, max_tokens: 4000, temperature: 0, thinking: { type: "disabled" }, tools: tools.map((tool) => ({ name: tool.name, description: tool.description, input_schema: { type: "object", required: tool.required ?? [], properties: tool.properties } })) }),
       })
-      if (!response.ok) throw new Error(`Repair agent request failed (${response.status})`)
+      if (!response.ok) throw new Error(`Repair agent request failed (${response.status}): ${(await response.text()).slice(0, 500)}`)
       const payload = await response.json() as { content?: Array<{ type: string; id?: string; name?: string; input?: Record<string, unknown>; text?: string }> }
       if (!payload.content) throw new Error("Repair agent response did not contain content")
       messages.push({ role: "assistant", content: payload.content })

@@ -121,7 +121,7 @@ export class AnthropicTriageModel implements TriageModel {
         messages: [{ role: "user", content: prompt }],
       }),
     })
-    if (!response.ok) throw new Error(`LLM request failed (${response.status})`)
+    if (!response.ok) throw new Error(`LLM request failed (${response.status}): ${(await response.text()).slice(0, 500)}`)
     const payload = (await response.json()) as { content?: Array<{ type: string; text?: string }> }
     const text = payload.content?.find((block) => block.type === "text")?.text
     if (!text) throw new Error("LLM response did not contain text")
