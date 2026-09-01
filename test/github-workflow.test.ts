@@ -34,6 +34,7 @@ const bugTriage: TriageResult = {
 }
 
 const passingProof: ProofInput = {
+  baselineTestsGreen: true,
   baselineReproduced: true,
   redlineFailedOnBaseline: true,
   testsGreenAfterPatch: true,

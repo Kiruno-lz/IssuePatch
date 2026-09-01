@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Inventory</title>
+    <style>
+      body { font: 16px system-ui, sans-serif; max-width: 680px; margin: 48px auto; padding: 0 24px; }
+      li { padding: 8px 0; }
+      button { margin-right: 8px; padding: 8px 14px; }
+      #status { color: #555; margin: 20px 0 12px; }
+    </style>
+  </head>
+  <body>
+    <h1>Inventory</h1>
+    <p id="status" data-testid="page-status">Loading…</p>
+    <ol id="items" data-testid="items"></ol>
+    <button id="previous" aria-label="Previous">Previous</button>
+    <button id="next" aria-label="Next">Next</button>
+    <script>
+      let page = 1;
+      async function load() {
+        const data = await fetch(`/api/items?page=${page}`).then((r) => r.json());
+        document.querySelector('[data-testid="page-status"]').textContent = `Page ${page} of ${data.pages}`;
+        document.querySelector('[data-testid="items"]').innerHTML = data.items
+          .map((item) => `<li data-testid="item">${item}</li>`).join('');
+      }
+      document.querySelector('#next').addEventListener('click', () => { page = Math.min(2, page + 1); load(); });
+      document.querySelector('#previous').addEventListener('click', () => { page = Math.max(1, page - 1); load(); });
+      load();
+    </script>
+  </body>
+</html>

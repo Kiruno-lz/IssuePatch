@@ -14,6 +14,11 @@ export interface IssuePatchConfig {
   llmApiKey?: string
   llmBaseUrl: string
   llmModel: string
+  projectStartCommand?: string
+  projectStartArgs: string[]
+  projectTestCommand?: string
+  projectTestArgs: string[]
+  projectPort: number
 }
 
 function optionalBoolean(value: string | undefined, fallback: boolean): boolean {
@@ -27,6 +32,13 @@ function positiveInteger(value: string | undefined, fallback: number): number {
   if (value === undefined) return fallback
   const parsed = Number(value)
   if (!Number.isInteger(parsed) || parsed <= 0) throw new Error(`Expected a positive integer, received: ${value}`)
+  return parsed
+}
+
+function jsonArgs(value: string | undefined): string[] {
+  if (!value) return []
+  const parsed = JSON.parse(value) as unknown
+  if (!Array.isArray(parsed) || !parsed.every((item) => typeof item === "string")) throw new Error("Expected a JSON string array")
   return parsed
 }
 
@@ -54,5 +66,10 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): IssuePatchConf
     llmApiKey: env.LLM_API_KEY,
     llmBaseUrl: (env.LLM_BASE_URL ?? "https://api.deepseek.com/anthropic").replace(/\/$/, ""),
     llmModel: env.LLM_MODEL ?? "deepseek-v4-flash",
+    projectStartCommand: env.ISSUEPATCH_START_COMMAND?.trim() || undefined,
+    projectStartArgs: jsonArgs(env.ISSUEPATCH_START_ARGS),
+    projectTestCommand: env.ISSUEPATCH_TEST_COMMAND?.trim() || undefined,
+    projectTestArgs: jsonArgs(env.ISSUEPATCH_TEST_ARGS),
+    projectPort: positiveInteger(env.ISSUEPATCH_PORT, 3000),
   }
 }

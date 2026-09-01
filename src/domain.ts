@@ -66,6 +66,19 @@ export interface TriageResult {
   evidence: string[]
   acceptanceCriteria: string[]
   needsHumanReview: boolean
+  verificationPlan?: VerificationPlan
+}
+
+export type BrowserStep =
+  | { action: "goto"; path?: string }
+  | { action: "click"; selector: string }
+  | { action: "type"; selector: string; value: string }
+  | { action: "assert_text"; selector: string; expected: string }
+
+export interface VerificationPlan {
+  port: number
+  baseline: BrowserStep[]
+  after: BrowserStep[]
 }
 
 export interface MonitorState {
@@ -75,6 +88,7 @@ export interface MonitorState {
 }
 
 export interface ProofInput {
+  baselineTestsGreen: boolean
   baselineReproduced: boolean
   redlineFailedOnBaseline: boolean
   testsGreenAfterPatch: boolean
@@ -110,6 +124,7 @@ export function triggerKey(event: Pick<IssueEvent, "source" | "issue" | "comment
 
 export function decideProof(input: ProofInput): ProofDecision {
   const checks: Array<[keyof ProofInput, string]> = [
+    ["baselineTestsGreen", "baseline tests"],
     ["baselineReproduced", "baseline reproduction"],
     ["redlineFailedOnBaseline", "redline test failure on baseline"],
     ["testsGreenAfterPatch", "green tests after patch"],

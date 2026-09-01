@@ -1,4 +1,4 @@
-import { Issue, IssueRoute, TriageResult } from "./domain.js"
+import { BrowserStep, Issue, IssueRoute, TriageResult, VerificationPlan } from "./domain.js"
 
 const routes: IssueRoute[] = [
   "code_bug",
@@ -18,6 +18,7 @@ export function triagePrompt(issue: Issue): string {
   return [
     "Classify this GitHub Issue for an autonomous repository maintenance service.",
     "Return JSON only with route, confidence, rationale, evidence, acceptanceCriteria, and needsHumanReview.",
+    "For code_bug or feature_request, also return verificationPlan with port, baseline, and after browser steps.",
     `Allowed route values: ${routes.join(", ")}.`,
     "Use human_review for security-sensitive, ambiguous, or high-impact decisions.",
     `Repository: ${issue.repository}`,
@@ -33,6 +34,26 @@ function parseJson(text: string): unknown {
   const end = candidate.lastIndexOf("}")
   if (start < 0 || end <= start) throw new Error("Triage response did not contain a JSON object")
   return JSON.parse(candidate.slice(start, end + 1))
+}
+
+function parseVerificationPlan(value: unknown): VerificationPlan | undefined {
+  if (value === undefined) return undefined
+  if (!value || typeof value !== "object") throw new Error("verificationPlan must be an object")
+  const plan = value as Record<string, unknown>
+  if (!Number.isInteger(plan.port) || Number(plan.port) <= 0) throw new Error("verificationPlan.port must be positive")
+  const parseSteps = (key: string): BrowserStep[] => {
+    if (!Array.isArray(plan[key])) throw new Error(`verificationPlan.${key} must be an array`)
+    return plan[key].map((step) => {
+      if (!step || typeof step !== "object" || typeof (step as Record<string, unknown>).action !== "string") throw new Error("verificationPlan contains an invalid step")
+      const item = step as Record<string, unknown>
+      if (item.action === "goto") return { action: "goto", ...(typeof item.path === "string" ? { path: item.path } : {}) }
+      if (item.action === "click" && typeof item.selector === "string") return { action: "click", selector: item.selector }
+      if (item.action === "type" && typeof item.selector === "string" && typeof item.value === "string") return { action: "type", selector: item.selector, value: item.value }
+      if (item.action === "assert_text" && typeof item.selector === "string" && typeof item.expected === "string") return { action: "assert_text", selector: item.selector, expected: item.expected }
+      throw new Error("verificationPlan contains an invalid browser step")
+    })
+  }
+  return { port: Number(plan.port), baseline: parseSteps("baseline"), after: parseSteps("after") }
 }
 
 export function parseTriageResult(text: string): TriageResult {
@@ -55,6 +76,7 @@ export function parseTriageResult(text: string): TriageResult {
     evidence: list("evidence"),
     acceptanceCriteria: list("acceptanceCriteria"),
     needsHumanReview: value.needsHumanReview,
+    verificationPlan: parseVerificationPlan(value.verificationPlan),
   }
 }
 

@@ -81,6 +81,7 @@ test("triage parser accepts structured model output and classifier falls back to
 
 test("proof decision requires every independent gate", () => {
   const failed = decideProof({
+    baselineTestsGreen: true,
     baselineReproduced: true,
     redlineFailedOnBaseline: false,
     testsGreenAfterPatch: true,
@@ -91,6 +92,7 @@ test("proof decision requires every independent gate", () => {
   assert.equal(failed.passed, false)
   assert.deepEqual(failed.missing, ["redline test failure on baseline"])
   assert.equal(decideProof({
+    baselineTestsGreen: true,
     baselineReproduced: true,
     redlineFailedOnBaseline: true,
     testsGreenAfterPatch: true,
