@@ -82,11 +82,11 @@ class SandboxWorkspace {
   }
 
   async listFiles(path = this.config.projectTargetPath): Promise<unknown> {
-    return await this.sandbox.files.list(this.safePath(path))
+    return await this.sandbox.files.list(this.targetPath(path))
   }
 
   async readFile(path: string): Promise<string> {
-    const content = await this.sandbox.files.readText(this.safePath(path))
+    const content = await this.sandbox.files.readText(this.targetPath(path))
     return content.length > 16000 ? `${content.slice(0, 16000)}\n[truncated]` : content
   }
 
@@ -95,7 +95,7 @@ class SandboxWorkspace {
   }
 
   async writeFile(path: string, content: string): Promise<{ path: string; bytes: number }> {
-    const target = this.safePath(path)
+    const target = this.targetPath(path)
     if (this.phase === "redline" && !this.isTestPath(target)) {
       throw new Error("The redline phase may only write test files")
     }
@@ -168,6 +168,15 @@ class SandboxWorkspace {
   private safePath(input: string): string {
     const candidate = posix.normalize(input.startsWith("/") ? input : `${REPO_ROOT}/${input}`)
     if (candidate !== REPO_ROOT && !candidate.startsWith(`${REPO_ROOT}/`)) throw new Error(`Path escapes repository: ${input}`)
+    return candidate
+  }
+
+  private targetPath(input: string): string {
+    const target = this.safePath(this.config.projectTargetPath)
+    const candidate = this.safePath(input)
+    if (target !== REPO_ROOT && candidate !== target && !candidate.startsWith(`${target}/`)) {
+      throw new Error(`Path is outside configured target ${this.config.projectTargetPath}: ${input}`)
+    }
     return candidate
   }
 
