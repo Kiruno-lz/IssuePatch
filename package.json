@@ -1,0 +1,20 @@
+{
+  "name": "issuepatch-solari-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node --import tsx src/main.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test test/*.test.ts",
+    "fixture:check": "node --import tsx --test test/fixture-contract.test.ts"
+  },
+  "dependencies": {
+    "@solarisdk/browser": "^0.1.2",
+    "@solarisdk/sdk": "^0.1.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.8.2"
+  }
+}
