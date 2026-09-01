@@ -59,6 +59,23 @@ test("GitHub client maps issue and filters pull requests", async () => {
   assert.match(calls[0], /state=open/)
 })
 
+test("GitHub publisher excludes generated cache files at the publish boundary", async () => {
+  const paths: string[] = []
+  const queue: unknown[] = [{ sha: "blob" }, { sha: "tree" }, { sha: "commit" }, undefined, { number: 9, html_url: "https://github.test/pr/9" }]
+  const client = new GitHubClient("secret", "https://github.test", async (input, init) => {
+    if (init?.body) {
+      const body = JSON.parse(String(init.body)) as { tree?: Array<{ path: string }> }
+      for (const item of Array.isArray(body.tree) ? body.tree : []) paths.push(item.path)
+    }
+    return response(queue.shift())
+  })
+  await client.publishRepair({ repository: "owner/repo", baseBranch: "main", baseSha: "base", branch: "issuepatch/test", files: [
+    { path: "fixtures/app.py", content: "fixed" },
+    { path: "fixtures/__pycache__/app.pyc", content: "generated" },
+  ], commitMessage: "fix: test", prTitle: "fix: test", prBody: "proof" })
+  assert.deepEqual(paths, ["fixtures/app.py"])
+})
+
 test("workflow does not publish a PR when a proof gate is missing", async () => {
   const calls: string[] = []
   const github = new GitHubClient("secret", "https://github.test", async (input) => {

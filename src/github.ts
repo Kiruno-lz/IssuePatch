@@ -120,9 +120,10 @@ export class GitHubClient implements IssueSource {
     prTitle: string
     prBody: string
   }): Promise<PublishedPullRequest> {
-    if (!input.files.length) throw new Error("Cannot publish a repair without changed files")
+    const files = input.files.filter((file) => !/(^|\/)(node_modules|__pycache__)(\/|$)|\.(pyc|pyo|log)$/.test(file.path))
+    if (!files.length) throw new Error("Cannot publish a repair without publishable changed files")
     const blobs = []
-    for (const file of input.files) {
+    for (const file of files) {
       const blob = await this.request<{ sha: string }>(`/repos/${input.repository}/git/blobs`, {
         method: "POST",
         body: JSON.stringify({ content: file.content, encoding: "utf-8" }),
