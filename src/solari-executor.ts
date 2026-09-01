@@ -162,6 +162,7 @@ class SandboxWorkspace {
   async changedFiles(): Promise<ChangedFile[]> {
     const status = await this.sandbox.git.status(REPO_ROOT)
     const paths = [...new Set([...status.staged, ...status.modified, ...status.untracked])]
+      .filter((path) => !/(^|\/)(node_modules|__pycache__)(\/|$)|\.(pyc|pyo|log)$/.test(path))
     return await Promise.all(paths.map(async (path) => ({ path, content: await this.readFile(path) })))
   }
 
