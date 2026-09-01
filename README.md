@@ -49,6 +49,11 @@ ISSUEPATCH_MODE=poll             # poll, once, or fixture
 ISSUEPATCH_POLL_INTERVAL_MS=60000
 ISSUEPATCH_MENTION=@IssuePatch
 ISSUEPATCH_STATE_PATH=.issuepatch/state.json
+ISSUEPATCH_START_COMMAND=npm
+ISSUEPATCH_START_ARGS=["start"]
+ISSUEPATCH_TEST_COMMAND=npm
+ISSUEPATCH_TEST_ARGS=["test"]
+ISSUEPATCH_PORT=3000
 ```
 
 The Solari and LLM variables are required for code and feature maintenance:

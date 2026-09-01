@@ -64,8 +64,14 @@ export class IssueMonitor {
         await this.emit({ source: "poll", issue, observedAt }, state, events)
       }
 
+      const bodyIsNew = cursor ? issue.updatedAt > cursor : this.options.includeExisting || issue.createdAt > state.initializedAt
+      if (bodyIsNew && containsMention(issue.body, this.options.mentionHandle)) {
+        await this.emit({ source: "mention", issue, observedAt }, state, events)
+      }
+
       const comments = await this.source.listIssueComments(this.options.repository, issue.number, cursor)
       for (const comment of comments) {
+        if (!cursor && !this.options.includeExisting && comment.createdAt <= state.initializedAt) continue
         if (!containsMention(comment.body, this.options.mentionHandle)) continue
         await this.emit({ source: "mention", issue, comment, observedAt }, state, events)
       }

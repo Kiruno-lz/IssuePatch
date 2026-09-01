@@ -116,8 +116,8 @@ export function containsMention(text: string, handle: string): boolean {
 }
 
 export function triggerKey(event: Pick<IssueEvent, "source" | "issue" | "comment">): string {
-  if (event.source === "mention" && event.comment) {
-    return `${event.issue.repository}#${event.issue.number}:mention:${event.comment.id}`
+  if (event.source === "mention") {
+    return `${event.issue.repository}#${event.issue.number}:mention:${event.comment?.id ?? "body"}`
   }
   return `${event.issue.repository}#${event.issue.number}:poll`
 }

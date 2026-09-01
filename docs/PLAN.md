@@ -82,9 +82,10 @@ npm test
 npm run fixture:check
 ```
 
-The fixture gate must prove baseline failure, redline failure, post-patch
-green, and independent E2E success. If Solari credentials are unavailable,
-the contract tests still run but the live gate remains explicitly unverified.
+The fixture contract gate proves the intentionally broken baseline and the
+minimal corrected behavior locally. A live Solari run additionally proves
+baseline tests, redline failure, post-patch green, and independent E2E success;
+without Solari credentials that live gate remains explicitly unverified.
 
 Commit: `feat: run verified repairs in solari`
 

@@ -116,6 +116,7 @@ when all required predicates are true:
 
 ```text
 baseline_reproduced
+AND baseline_tests_green
 AND redline_failed_on_baseline
 AND tests_green_after_patch
 AND e2e_passed_after_restart

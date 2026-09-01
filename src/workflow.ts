@@ -38,7 +38,17 @@ export class IssueWorkflow {
     const result = await this.triage.classify(event.issue)
     if (!codeRoutes.includes(result.route)) return await this.handleNonCode(event, result)
 
-    const maintenance = await this.executor.execute(event, result)
+    let maintenance: MaintenanceResult
+    try {
+      maintenance = await this.executor.execute(event, result)
+    } catch (error) {
+      await this.github.createIssueComment(event.issue.repository, event.issue.number, [
+        `IssuePatch could not complete the ${result.route} workflow.`,
+        `Reason: ${error instanceof Error ? error.message : String(error)}`,
+        "No successful repair claim was made.",
+      ].join("\n\n"))
+      return { route: result.route, outcome: "failed", proofPassed: false }
+    }
     const proof = decideProof(maintenance.proof)
     if (!proof.passed) {
       await this.github.createIssueComment(event.issue.repository, event.issue.number, this.failureComment(result, proof.missing))
@@ -46,7 +56,7 @@ export class IssueWorkflow {
     }
 
     const repository = await this.github.getRepository(event.issue.repository)
-    const branch = `issuepatch/${event.issue.number}-${event.issue.id}`
+    const branch = `issuepatch/${event.issue.number}-${event.comment?.id ?? event.issue.id}`
     const pullRequest = await this.github.publishRepair({
       repository: event.issue.repository,
       baseBranch: repository.defaultBranch,

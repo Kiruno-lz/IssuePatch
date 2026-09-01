@@ -61,6 +61,24 @@ test("monitor emits new issues and mentioned comments once", async () => {
   assert.deepEqual(accepted, ["poll:7", "mention:7"])
 })
 
+test("monitor accepts a fresh mention in the Issue body", async () => {
+  const mentionedIssue = { ...issue, body: "@IssuePatch please investigate", createdAt: "2026-09-01T00:01:00.000Z" }
+  const source: IssueSource = {
+    async listOpenIssues() { return [mentionedIssue] },
+    async listIssueComments() { return [] },
+  }
+  let state: MonitorState = { initializedAt: "2026-09-01T00:00:00.000Z", processedTriggers: {} }
+  const store: StateStore = { async load() { return structuredClone(state) }, async save(next) { state = next } }
+  const accepted: IssueEvent[] = []
+  const monitor = new IssueMonitor(source, store, { async accept(event) { accepted.push(event) } }, {
+    repository: "owner/repo", mentionHandle: "IssuePatch", includeExisting: false, now: () => "2026-09-01T00:02:00.000Z",
+  })
+  const events = await monitor.pollOnce()
+  assert.equal(events[0].source, "mention")
+  assert.match(events[0].triggerId, /mention:body$/)
+  assert.equal(accepted.length, 1)
+})
+
 test("triage parser accepts structured model output and classifier falls back to human review", async () => {
   const json = JSON.stringify({
     route: "code_bug",
