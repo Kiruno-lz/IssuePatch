@@ -96,6 +96,16 @@ test("triage parser accepts structured model output and classifier falls back to
   const fallback = await new LlmTriageClassifier(model).classify(issue)
   assert.equal(fallback.route, "human_review")
   assert.equal(fallback.needsHumanReview, true)
+  const scalarFields = parseTriageResult(JSON.stringify({
+    route: "question",
+    confidence: 0.8,
+    rationale: "A question.",
+    evidence: "asks for usage details",
+    acceptanceCriteria: "answer the question",
+    needsHumanReview: false,
+  }))
+  assert.deepEqual(scalarFields.evidence, ["asks for usage details"])
+  assert.deepEqual(scalarFields.acceptanceCriteria, ["answer the question"])
 })
 
 test("proof decision requires every independent gate", () => {

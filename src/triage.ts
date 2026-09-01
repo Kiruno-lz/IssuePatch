@@ -64,6 +64,7 @@ export function parseTriageResult(text: string): TriageResult {
   if (!Number.isFinite(confidence) || confidence < 0 || confidence > 1) throw new Error("Triage confidence must be between 0 and 1")
   const list = (key: string): string[] => {
     const item = value[key]
+    if (typeof item === "string") return item.trim() ? [item] : []
     if (!Array.isArray(item) || !item.every((entry) => typeof entry === "string")) throw new Error(`Triage field ${key} must be a string array`)
     return item
   }
