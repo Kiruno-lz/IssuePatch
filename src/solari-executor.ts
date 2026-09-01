@@ -246,6 +246,7 @@ class RepairAgent {
       { name: "finish", description: "Finish this phase.", required: ["summary"], properties: { summary: { type: "string" } } },
     ]
     const messages: Array<Record<string, unknown>> = [{ role: "user", content: `Issue #${issue.issue.number}: ${issue.issue.title}\n\n${issue.issue.body}` }]
+    let wroteFile = false
     const system = [
       "You are a careful IssuePatch maintenance agent.",
       `The isolated repository is ${root}.`,
@@ -287,7 +288,7 @@ class RepairAgent {
             case "browser_snapshot": result = await this.snapshot(browser); break
             case "browser_click": result = await this.click(browser, String(input.selector)); break
             case "browser_assert": result = await this.assert(browser, String(input.selector), String(input.expected)); break
-            case "write_file": result = await workspace.writeFile(String(input.path), String(input.content)); break
+            case "write_file": result = await workspace.writeFile(String(input.path), String(input.content)); wroteFile = true; break
             case "finish": result = { accepted: true, summary: String(input.summary ?? "") }; finished = true; break
             default: throw new Error(`Unknown agent tool: ${call.name}`)
           }
@@ -296,6 +297,10 @@ class RepairAgent {
         }
         await this.recorder.event("agent.tool", { phase, step, name: call.name, result: JSON.stringify(result).slice(0, 2000) })
         toolResults.push({ type: "tool_result", tool_use_id: call.id!, content: JSON.stringify(result) })
+        if (phase === "patch" && wroteFile && call.name === "run_command" && (result as { exitCode?: number }).exitCode === 0) {
+          await this.recorder.event("agent.phase.complete", { phase, reason: "configured test command passed after a patch write" })
+          return
+        }
       }
       messages.push({ role: "user", content: toolResults })
       if (finished) break
