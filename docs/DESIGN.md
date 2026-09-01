@@ -48,7 +48,8 @@ repository policy explicitly enables an isolated security workflow.
 1. Fetch the Issue and select the base revision.
 2. Create an isolated branch workspace in the Solari Sandbox.
 3. Establish the baseline with repository checks.
-4. Reproduce the Issue through the real Browser and VM/preview environment.
+4. Reproduce the Issue through the real Browser and VM/preview environment;
+   for a feature request, verify that the requested behavior is still absent.
 5. Add a redline test or acceptance test and prove it fails on the baseline.
 6. Apply the smallest coherent code change.
 7. Run the test suite and prove the redline test is green.

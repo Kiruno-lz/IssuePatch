@@ -3,7 +3,7 @@ import { dirname, join, posix, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 import { Solari } from "@solarisdk/browser"
 import { SolariClient } from "@solarisdk/sdk"
-import { BrowserStep, IssueEvent, TriageResult, VerificationPlan, decideProof } from "./domain.js"
+import { BrowserStep, IssueEvent, TriageResult, VerificationPlan, baselineGateForRoute, decideProof } from "./domain.js"
 import { ChangedFile, GitHubClient } from "./github.js"
 import { IssuePatchConfig } from "./config.js"
 import { MaintenanceExecutor, MaintenanceResult } from "./workflow.js"
@@ -376,7 +376,7 @@ export class SolariRepairExecutor implements MaintenanceExecutor {
       if (replayUrl) await recorder.text("replay-url.txt", `${replayUrl}\n`)
       const proof = decideProof({
         baselineTestsGreen: baselineTests.exitCode === 0,
-        baselineReproduced: baseline.passed,
+        baselineReproduced: baselineGateForRoute(triage.route, baseline.passed),
         redlineFailedOnBaseline: redline.exitCode !== 0,
         testsGreenAfterPatch: tests.exitCode === 0,
         e2ePassedAfterRestart: after.passed,

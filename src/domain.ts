@@ -135,3 +135,10 @@ export function decideProof(input: ProofInput): ProofDecision {
   const missing = checks.filter(([key]) => !input[key]).map(([, label]) => label)
   return { ...input, passed: missing.length === 0, missing }
 }
+
+export function baselineGateForRoute(route: IssueRoute, browserPlanPassed: boolean): boolean {
+  // A bug must reproduce its broken behavior; a feature must still be absent
+  // before implementation. A browser operation that throws aborts before
+  // reaching this gate, so a false plan result is an expected feature absence.
+  return route === "feature_request" ? !browserPlanPassed : browserPlanPassed
+}

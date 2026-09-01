@@ -1,7 +1,7 @@
 import assert from "node:assert/strict"
 import test from "node:test"
 import { loadConfig } from "../src/config.js"
-import { containsMention, decideProof, Issue, IssueComment, MonitorState } from "../src/domain.js"
+import { baselineGateForRoute, containsMention, decideProof, Issue, IssueComment, MonitorState } from "../src/domain.js"
 import { EventSink, IssueMonitor, IssueSource, StateStore } from "../src/monitor.js"
 import { LlmTriageClassifier, parseTriageResult, TriageModel, triagePrompt } from "../src/triage.js"
 
@@ -129,4 +129,10 @@ test("proof decision requires every independent gate", () => {
     changedFilesPresent: true,
     evidenceSameRun: true,
   }).passed, true)
+})
+
+test("feature baseline gate requires the requested feature to be absent", () => {
+  assert.equal(baselineGateForRoute("feature_request", false), true)
+  assert.equal(baselineGateForRoute("feature_request", true), false)
+  assert.equal(baselineGateForRoute("code_bug", true), true)
 })
