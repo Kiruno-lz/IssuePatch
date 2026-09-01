@@ -26,7 +26,7 @@ class RunRecorder {
   }
 
   async event(kind: string, data: Record<string, unknown>): Promise<void> {
-    this.events.push({ at: new Date().toISOString(), kind, ...data })
+    this.events.push({ at: new Date().toISOString(), kind, ...sanitizeArtifact(data) })
     await this.text("action-trace.jsonl", this.events.map((item) => JSON.stringify(item)).join("\n") + "\n")
   }
 
@@ -41,6 +41,21 @@ class RunRecorder {
   async screenshot(name: string, bytes: Uint8Array): Promise<void> {
     await writeFile(join(this.dir, name), bytes)
   }
+}
+
+function sanitizeArtifact(value: unknown): any {
+  if (typeof value === "string") {
+    try {
+      const url = new URL(value)
+      if (url.searchParams.has("pt_token")) return `${url.origin}${url.pathname}`
+    } catch {
+      // Not every recorded string is a URL.
+    }
+    return value
+  }
+  if (Array.isArray(value)) return value.map(sanitizeArtifact)
+  if (value && typeof value === "object") return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, sanitizeArtifact(item)]))
+  return value
 }
 
 class SandboxWorkspace {
@@ -237,6 +252,7 @@ class RepairAgent {
       await this.recorder.event("agent.response", { phase, step, toolCalls: calls.length })
       if (!calls.length) break
       let finished = false
+      const toolResults: Array<{ type: "tool_result"; tool_use_id: string; content: string }> = []
       for (const call of calls) {
         let result: unknown
         try {
@@ -257,8 +273,9 @@ class RepairAgent {
           result = { error: error instanceof Error ? error.message : String(error) }
         }
         await this.recorder.event("agent.tool", { phase, step, name: call.name, result: JSON.stringify(result).slice(0, 2000) })
-        messages.push({ role: "user", content: [{ type: "tool_result", tool_use_id: call.id, content: JSON.stringify(result) }] })
+        toolResults.push({ type: "tool_result", tool_use_id: call.id!, content: JSON.stringify(result) })
       }
+      messages.push({ role: "user", content: toolResults })
       if (finished) break
     }
   }
