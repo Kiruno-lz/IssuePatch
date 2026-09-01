@@ -86,7 +86,8 @@ class SandboxWorkspace {
   }
 
   async readFile(path: string): Promise<string> {
-    return await this.sandbox.files.readText(this.safePath(path))
+    const content = await this.sandbox.files.readText(this.safePath(path))
+    return content.length > 16000 ? `${content.slice(0, 16000)}\n[truncated]` : content
   }
 
   async searchCode(pattern: string): Promise<unknown> {
@@ -232,13 +233,14 @@ class RepairAgent {
       `The isolated repository is ${root}.`,
       `This is the ${phase} phase.`,
       phase === "redline"
-        ? "Only add a test that expresses the Issue acceptance criteria. Do not modify application code. Finish after the test is written."
-        : "Apply the smallest correct implementation change. Use the existing redline test and finish after the code is repaired.",
+        ? "Only add a test that expresses the Issue acceptance criteria. Do not modify application code. Focus on the target files named by the Issue, inspect only the target app and relevant tests, and finish immediately after the test is written."
+        : "Apply the smallest correct implementation change. Use the existing redline test and finish after the code is repaired. Focus only on the target app and its relevant tests; do not inspect unrelated IssuePatch orchestration files.",
       `Acceptance criteria: ${triage.acceptanceCriteria.join("; ") || "derive them from the Issue"}`,
       "Do not claim a phase succeeded from prose; the host records command and browser results.",
     ].join("\n")
 
-    for (let step = 1; step <= 16; step += 1) {
+    const maxSteps = phase === "redline" ? 10 : 12
+    for (let step = 1; step <= maxSteps; step += 1) {
       const response = await fetch(`${this.baseUrl}/v1/messages`, {
         method: "POST",
         headers: { "x-api-key": this.apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
