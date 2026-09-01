@@ -19,6 +19,7 @@ export interface IssuePatchConfig {
   projectTestCommand?: string
   projectTestArgs: string[]
   projectPort: number
+  projectTargetPath: string
 }
 
 function optionalBoolean(value: string | undefined, fallback: boolean): boolean {
@@ -71,5 +72,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): IssuePatchConf
     projectTestCommand: env.ISSUEPATCH_TEST_COMMAND?.trim() || undefined,
     projectTestArgs: jsonArgs(env.ISSUEPATCH_TEST_ARGS),
     projectPort: positiveInteger(env.ISSUEPATCH_PORT, 3000),
+    projectTargetPath: env.ISSUEPATCH_TARGET_PATH?.trim() || ".",
   }
 }

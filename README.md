@@ -54,6 +54,7 @@ ISSUEPATCH_START_ARGS=["start"]
 ISSUEPATCH_TEST_COMMAND=npm
 ISSUEPATCH_TEST_ARGS=["test"]
 ISSUEPATCH_PORT=3000
+ISSUEPATCH_TARGET_PATH=.
 ```
 
 The Solari and LLM variables are required for code and feature maintenance:

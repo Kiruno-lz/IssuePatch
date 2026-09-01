@@ -81,7 +81,7 @@ class SandboxWorkspace {
     this.phase = phase
   }
 
-  async listFiles(path = REPO_ROOT): Promise<unknown> {
+  async listFiles(path = this.config.projectTargetPath): Promise<unknown> {
     return await this.sandbox.files.list(this.safePath(path))
   }
 
@@ -91,7 +91,7 @@ class SandboxWorkspace {
   }
 
   async searchCode(pattern: string): Promise<unknown> {
-    return await this.sandbox.files.search(REPO_ROOT, pattern, 100)
+    return await this.sandbox.files.search(this.safePath(this.config.projectTargetPath), pattern, 100)
   }
 
   async writeFile(path: string, content: string): Promise<{ path: string; bytes: number }> {
@@ -241,6 +241,7 @@ class RepairAgent {
       "You are a careful IssuePatch maintenance agent.",
       `The isolated repository is ${root}.`,
       `This is the ${phase} phase.`,
+      `Target path: ${this.config.projectTargetPath}. Start by listing and reading only this target path; do not inspect unrelated repository files.`,
       `Configured application command: ${this.config.projectStartCommand ?? "not configured"} ${JSON.stringify(this.config.projectStartArgs)}. Configured test command: ${this.config.projectTestCommand ?? "not configured"} ${JSON.stringify(this.config.projectTestArgs)}. Use these commands exactly when running the app or tests.`,
       phase === "redline"
         ? "Only add a test that expresses the Issue acceptance criteria. Do not modify application code. Focus on the target files named by the Issue, inspect only the target app and relevant tests, and finish immediately after the test is written."
